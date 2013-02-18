@@ -10,5 +10,5 @@ depends "java"
 depends "runit", ">= 1.0.0"
 
 suggests "apache2"
-suggests "nginx"
+depends "nginx"
 suggests "iptables"
