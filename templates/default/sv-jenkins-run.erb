@@ -9,6 +9,7 @@ exec chpst \
     LOGNAME=<%= node['jenkins']['server']['user'] %> \
     HOME=<%= node['jenkins']['server']['home'] %> \
     GEM_HOME=/var/lib/jenkins/.gem \
+    LC_ALL=en_US.utf8 \
     JENKINS_HOME=<%= node['jenkins']['server']['home'] %>/jenkins-data \
     java -jar jenkins.war \
       -Xloggc:<%= node['jenkins']['server']['log_dir'] %>/gclog.log <%= node['jenkins']['server']['jvm_options'] %>
