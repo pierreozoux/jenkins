@@ -67,14 +67,23 @@ ruby_block "block_until_operational" do
   action :nothing
 end
 
-node['jenkins']['server']['plugins'].each do |name|
+node['jenkins']['server']['plugins'].each do |plugin|
+  version = 'latest'
+  if plugin.is_a?(Hash)
+    name = plugin['name']
+    version = plugin['version'] if plugin['version']
+  else
+    name = plugin
+  end
+
   remote_file File.join(plugins_dir, "#{name}.hpi") do
-    source "#{node['jenkins']['mirror']}/plugins/#{name}/latest/#{name}.hpi"
+    source "#{node['jenkins']['mirror']}/plugins/#{name}/#{version}/#{name}.hpi"
     owner node['jenkins']['server']['user']
     group node['jenkins']['server']['group']
     backup false
     action :create_if_missing
     notifies :restart, "runit_service[jenkins]"
+    notifies :create, "ruby_block[block_until_operational]"
   end
 end
 
@@ -84,6 +93,7 @@ remote_file File.join(home_dir, "jenkins.war") do
   owner node['jenkins']['server']['user']
   group node['jenkins']['server']['group']
   notifies :restart, "runit_service[jenkins]"
+  notifies :create, "ruby_block[block_until_operational]"
   not_if "test -f /var/lib/jenkins/jenkins.war"
 end
 
@@ -101,9 +111,12 @@ log "plugins updated, restarting jenkins" do
   end
   action :nothing
   notifies :restart, "runit_service[jenkins]"
+  notifies :create, "ruby_block[block_until_operational]"
 end
 
-runit_service "jenkins" do
-  action [:enable, :start]
+runit_service "jenkins"
+
+log "ensure jenkins is running" do
+  notifies :start, "runit_service[jenkins]", :immediately
   notifies :create, "ruby_block[block_until_operational]", :immediately
 end
